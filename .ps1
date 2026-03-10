@@ -1,84 +1,69 @@
-# LilyMod Meow Analyzer - Enhanced Edition
-# Original Author: Tonynoh
-# Enhanced by: Lily<3 with love - credits to Zedoon
+# Meow Mod Analyzer - PowerShell Script
+# Author: Tonynoh
+# scans minecraft mods for shady stuff and checks em against known mod databases
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Clear-Host
 
-# ASCII Art Banner migliorato con stile LilyMod
 $Banner = @"
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║     ███╗   ███╗███████╗ ██████╗ ██╗    ██╗  ███╗   ███╗ ██████╗ ██████╗     ║
-║     ████╗ ████║██╔════╝██╔═══██╗██║    ██║  ████╗ ████║██╔═══██╗██╔══██╗    ║
-║     ██╔████╔██║█████╗  ██║   ██║██║ █╗ ██║  ██╔████╔██║██║   ██║██║  ██║    ║
-║     ██║╚██╔╝██║██╔══╝  ██║   ██║██║███╗██║  ██║╚██╔╝██║██║   ██║██║  ██║    ║
-║     ██║ ╚═╝ ██║███████╗╚██████╔╝╚███╔███╔╝  ██║ ╚═╝ ██║╚██████╔╝██████╔╝    ║
-║     ╚═╝     ╚═╝╚══════╝ ╚═════╝  ╚══╝╚══╝   ╚═╝     ╚═╝ ╚═════╝ ╚═════╝     ║
-║                                                                               ║
-║        █████╗ ███╗   ██╗ █████╗ ██╗   ██╗   ██╗███████╗███████╗██████╗      ║
-║       ██╔══██╗████╗  ██║██╔══██╗██║   ╚██╗ ██╔╝╚══███╔╝██╔════╝██╔══██╗     ║
-║       ███████║██╔██╗ ██║███████║██║    ╚████╔╝   ███╔╝ █████╗  ██████╔╝     ║
-║       ██╔══██║██║╚██╗██║██╔══██║██║     ╚██╔╝   ███╔╝  ██╔══╝  ██╔══██╗     ║
-║       ██║  ██║██║ ╚████║██║  ██║███████╗ ██║   ███████╗███████╗██║  ██║     ║
-║       ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝ ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝     ║
-║                                                                               ║
-║                          ╱\    ╱                                             ║
-║                         ╱  )  ( ')                                           ║
-║                        (  /  )                                               ║
-║                         \(__)|                                               ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+
+██╗  ██╗ ██████╗ ██████╗ ██████╗  ██████╗ ██████╗     ███╗   ███╗ ██████╗ ██████╗     
+██║  ██║██╔═══██╗██╔══██╗██╔══██╗██╔═══██╗██╔══██╗    ████╗ ████║██╔═══██╗██╔══██╗    
+███████║██║   ██║██████╔╝██████╔╝██║   ██║██████╔╝    ██╔████╔██║██║   ██║██║  ██║    
+██╔══██║██║   ██║██╔══██╗██╔══██╗██║   ██║██╔══██╗    ██║╚██╔╝██║██║   ██║██║  ██║    
+██║  ██║╚██████╔╝██║  ██║██║  ██║╚██████╔╝██║  ██║    ██║ ╚═╝ ██║╚██████╔╝██████╔╝    
+╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝     ╚═╝ ╚═════╝ ╚═════╝     
+
+
+ █████╗ ███╗   ██╗ █████╗ ██╗     ██╗   ██╗███████╗███████╗██████╗ 
+██╔══██╗████╗  ██║██╔══██╗██║     ╚██╗ ██╔╝╚══███╔╝██╔════╝██╔══██╗
+███████║██╔██╗ ██║███████║██║      ╚████╔╝   ███╔╝ █████╗  ██████╔╝
+██╔══██║██║╚██╗██║██╔══██║██║       ╚██╔╝   ███╔╝  ██╔══╝  ██╔══██╗
+██║  ██║██║ ╚████║██║  ██║███████╗   ██║   ███████╗███████╗██║  ██║
+╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝
+
+⠀⠀⠀⠀⣶⣄⠀⠀⠀⠀⠀⠀⢀⣶⡆⠀⠀⠀
+⠀⠀⠀⢸⣿⣿⡆⠀⠀⠀⠀⢀⣾⣿⡇⠀⠀⠀
+⠀⠀⠀⠘⣿⣿⣿⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀
+⠀⠀⠀⠀⢿⣿⣿⣤⣤⣤⣤⣼⣿⡿⠃⠀⠀⠀
+⠀⠀⠀⢠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀
+⠀⠀⢠⣿⡃⣦⢹⣿⣟⣙⣿⣿⠰⡀⣿⣇⠀⠀
+⠠⠬⣿⣿⣷⣶⣿⣿⣿⣿⣿⣿⣷⣾⣿⣿⡭⠤      
+⠀⣼⣿⣿⣿⣿⠿⠛⠛⠛⠛⠻⢿⣿⣿⣿⣿⡀
+⢰⣿⣿⣿⠋⠀⠀⠀⢀⣀⠀⠀⠀⠉⢿⣿⣿⣧
+⢸⣿⣿⠃⠜⠛⠂⠀⠋⠉⠃⠐⠛⠻⠄⢿⣿⣿
+⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿
+⠘⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣿⡏
+⠀⠈⠻⠿⣤⣀⡀⠀⠀⠀⠀⠀⣀⣠⠾⠟⠋⠀  Made By ♥ Daanii06_
+
 "@
 
-Write-Host $Banner -ForegroundColor Cyan
-Write-Host ""
-Write-Host "                    ╭──────────────────────────────────╮" -ForegroundColor Magenta
-Write-Host "                    │  " -NoNewline -ForegroundColor Magenta; Write-Host "Made with " -NoNewline -ForegroundColor White; Write-Host "♥" -NoNewline -ForegroundColor Red; Write-Host " by " -NoNewline -ForegroundColor White; Write-Host "LilyMod ❤️ Tonynoh" -NoNewline -ForegroundColor Cyan; Write-Host "  │" -ForegroundColor Magenta
-Write-Host "                    ╰──────────────────────────────────╯" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "═══════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkCyan
-Write-Host ""
-
-# Funzione per il percorso del mods folder con stile migliorato
-Write-Host "📂 " -NoNewline -ForegroundColor Yellow
-Write-Host "ENTER MODS FOLDER PATH" -ForegroundColor White
-Write-Host "   " -NoNewline; Write-Host "(press Enter to use default)" -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "   ╭─ " -NoNewline -ForegroundColor Cyan
-$modsPath = Read-Host "PATH" 
-Write-Host "   ╰────────────────" -ForegroundColor Cyan
-Write-Host ""
+# ask the user where their mods folder is
+Write-Host "Enter path to the mods folder: " -NoNewline
+Write-Host "(press Enter to use default)" -ForegroundColor DarkGray
+$modsPath = Read-Host "PATH"
+Write-Host
 
 if ([string]::IsNullOrWhiteSpace($modsPath)) {
     $modsPath = "$env:USERPROFILE\AppData\Roaming\.minecraft\mods"
-    Write-Host "   ⚡ " -NoNewline -ForegroundColor Yellow
-    Write-Host "Using default: " -NoNewline -ForegroundColor White
-    Write-Host $modsPath -ForegroundColor Green
-    Write-Host ""
+    Write-Host "Continuing with " -NoNewline
+    Write-Host $modsPath -ForegroundColor White
+    Write-Host
 }
 
 if (-not (Test-Path $modsPath -PathType Container)) {
-    Write-Host ""
-    Write-Host "   ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "   ║                      " -NoNewline -ForegroundColor Red; Write-Host "❌ ERROR" -NoNewline -ForegroundColor White -BackgroundColor Red; Write-Host "                          ║" -ForegroundColor Red
-    Write-Host "   ║                                                              ║" -ForegroundColor Red
-    Write-Host "   ║  Invalid Path! The directory does not exist                  ║" -ForegroundColor Red
-    Write-Host "   ║  or is not accessible.                                       ║" -ForegroundColor Red
-    Write-Host "   ║                                                              ║" -ForegroundColor Red
-    Write-Host "   ║  Tried to access: " -NoNewline -ForegroundColor Red; Write-Host "$modsPath".PadRight(35) -ForegroundColor Yellow -NoNewline; Write-Host "║" -ForegroundColor Red
-    Write-Host "   ║                                                              ║" -ForegroundColor Red
-    Write-Host "   ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "   Press any key to exit..." -ForegroundColor Gray
+    Write-Host "❌ Invalid Path!" -ForegroundColor Red
+    Write-Host "The directory does not exist or is not accessible." -ForegroundColor Yellow
+    Write-Host
+    Write-Host "Tried to access: $modsPath" -ForegroundColor Gray
+    Write-Host
+    Write-Host "Press any key to exit..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit 1
 }
 
-Write-Host "   📁 " -NoNewline -ForegroundColor Green
-Write-Host "Scanning directory: " -NoNewline -ForegroundColor White
-Write-Host $modsPath -ForegroundColor Cyan
-Write-Host ""
+Write-Host "📁 Scanning directory: $modsPath" -ForegroundColor Green
+Write-Host
 
 # check if minecraft is already running
 $mcProcess = Get-Process javaw -ErrorAction SilentlyContinue
@@ -90,13 +75,9 @@ if ($mcProcess) {
     try {
         $startTime = $mcProcess.StartTime
         $uptime = (Get-Date) - $startTime
-        Write-Host "   ⏰ " -NoNewline -ForegroundColor DarkCyan
-        Write-Host "MINECRAFT UPTIME" -ForegroundColor DarkCyan
-        Write-Host "   ╭──────────────────────────────────────────────╮" -ForegroundColor DarkCyan
-        Write-Host "   │  PID: " -NoNewline -ForegroundColor DarkCyan; Write-Host "$($mcProcess.Id)".PadRight(41) -ForegroundColor White -NoNewline; Write-Host "│" -ForegroundColor DarkCyan
-        Write-Host "   │  Started: " -NoNewline -ForegroundColor DarkCyan; Write-Host "$startTime".PadRight(38) -ForegroundColor White -NoNewline; Write-Host "│" -ForegroundColor DarkCyan
-        Write-Host "   │  Running: " -NoNewline -ForegroundColor DarkCyan; Write-Host "$($uptime.Hours)h $($uptime.Minutes)m $($uptime.Seconds)s".PadRight(38) -ForegroundColor White -NoNewline; Write-Host "│" -ForegroundColor DarkCyan
-        Write-Host "   ╰──────────────────────────────────────────────╯" -ForegroundColor DarkCyan
+        Write-Host "🕒 { Minecraft Uptime }" -ForegroundColor DarkCyan
+        Write-Host "   $($mcProcess.Name) PID $($mcProcess.Id) started at $startTime" -ForegroundColor Gray
+        Write-Host "   Running for: $($uptime.Hours)h $($uptime.Minutes)m $($uptime.Seconds)s" -ForegroundColor Gray
         Write-Host ""
     } catch {
         # couldn't grab process info, no biggie
@@ -155,6 +136,15 @@ function Query-Megabase {
 }
 
 # --- detection lists ---
+# these two arrays feed into the same scan pass, no need to run things twice
+#
+# $suspiciousPatterns - matched against class/file names and text inside the jar
+# $cheatStrings       - raw string search across bytecode
+#
+# note: i switched to word-boundary regex so stuff like "inject" (used by mixin @Inject)
+# or "NoDelay" from some networking libs doesn't trip the scanner anymore.
+# also pulled out "velocity" as a standalone since literally half of fabric uses that word.
+
 $suspiciousPatterns = @(
     "AimAssist", "AnchorTweaks", "AutoAnchor", "AutoCrystal", "AutoDoubleHand",
     "AutoHitCrystal", "AutoPot", "AutoTotem", "AutoArmor", "InventoryTotem",
@@ -228,7 +218,43 @@ $cheatStrings = @(
     "WalksyCrystalOptimizerMod", "WalksyOptimizer", "WalskyOptimizer"
 )
 
+# ─────────────────────────────────────────────────────────────────────────────
 # BYPASS / INJECTION DETECTION
+# Catches obfuscated cheat loaders (dqrkis-style) without false positives on
+# legitimate mods that use Fabric's jar-in-jar system normally.
+#
+# Core insight — what separates a malicious loader from a legit mod:
+#
+#   LEGIT jar-in-jar:
+#     • Every nested JAR has a version number in its filename
+#       (cloth-config-13.0.jar, fabric-api-base-0.97.3.jar)
+#     • OR it's a Maven-style dep (org_jetbrains_*, com_ibm_*, net_*, etc.)
+#     • The outer JAR has real code alongside its nested deps
+#     • No dangerous APIs (Runtime.exec, HTTP download/POST)
+#
+#   MALICIOUS loader:
+#     • Nested JAR has a short generic name with NO version number
+#       (mc-core.jar, payload.jar, bootstrap.jar, core.jar)
+#     • Outer JAR is a hollow shell: 0-2 own classes, wraps exactly 1 JAR
+#     • Bytecode uses Runtime.exec / HTTP file download / HTTP POST exfil
+#     • 60%+ of all classes renamed to single letters (a/a/b/c.class)
+#
+# False-positive guards:
+#   • "Suspicious nested JAR name" → only fires when filename has NO digits
+#     AND does NOT start with a Maven prefix (com_, org_, net_, io_, dev_…)
+#     AND the base name is ≤ 20 chars
+#     → passes cloth-config-13.0.jar, org_jetbrains_kotlin-stdlib.jar, etc.
+#
+#   • "Hollow shell" → only fires when there is EXACTLY ONE nested JAR
+#     and the outer JAR owns < 3 classes
+#     → never triggers on fabric-api (50 nested JARs) or any normal mod
+#
+#   • "Fake mod identity" → ONLY emitted when at least one dangerous flag
+#     (Runtime.exec / HTTP / obfuscation / suspicious JAR name) is also present
+#     → Modrinth simply doesn't index every build; a missing hash alone is
+#        not meaningful evidence
+# ─────────────────────────────────────────────────────────────────────────────
+
 function Invoke-BypassScan {
     param([string]$FilePath)
 
@@ -236,11 +262,16 @@ function Invoke-BypassScan {
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+    # Maven/Gradle-style prefixes used when bundling third-party libs.
+    # Filenames starting with these are always legitimate bundled dependencies.
+    # e.g. org_jetbrains_kotlin_kotlin-stdlib.jar, com_ibm_async_asyncutil.jar
     $mavenPrefixes = @(
         "com_","org_","net_","io_","dev_","gs_","xyz_",
         "app_","me_","tv_","uk_","be_","fr_","de_"
     )
 
+    # Returns $true when a nested JAR filename looks like a hidden payload.
+    # Safe when: has a digit (versioned), starts with a maven prefix, or name > 20 chars.
     function Test-SuspiciousJarName {
         param([string]$JarName)
         $base = [System.IO.Path]::GetFileNameWithoutExtension($JarName)
@@ -258,6 +289,9 @@ function Invoke-BypassScan {
         $nestedJars   = @($zip.Entries | Where-Object { $_.FullName -match "^META-INF/jars/.+\.jar$" })
         $outerClasses = @($zip.Entries | Where-Object { $_.FullName -match "\.class$" })
 
+        # ── 1. SUSPICIOUS NESTED JAR NAME ────────────────────────────────────
+        # A nested JAR without a version number and without a maven prefix is
+        # the clearest sign of a hidden payload (mc-core.jar, payload.jar, etc.)
         $suspiciousNestedJars = @()
         foreach ($nj in $nestedJars) {
             $njBase = [System.IO.Path]::GetFileName($nj.FullName)
@@ -269,11 +303,16 @@ function Invoke-BypassScan {
             $flags.Add("Suspicious nested JAR — no version number, not a known dependency: $sj")
         }
 
+        # ── 2. HOLLOW SHELL ───────────────────────────────────────────────────
+        # Exactly ONE nested JAR + fewer than 3 own classes = the outer JAR
+        # exists only to load the hidden inner JAR. fabric-api has 50 nested
+        # JARs and tons of own code, so this never fires for legitimate mods.
         if ($nestedJars.Count -eq 1 -and $outerClasses.Count -lt 3) {
             $njName = [System.IO.Path]::GetFileName(($nestedJars | Select-Object -First 1).FullName)
             $flags.Add("Hollow shell — outer JAR has only $($outerClasses.Count) own class(es) but wraps: $njName")
         }
 
+        # ── Read outer mod ID for later use ──────────────────────────────────
         $outerModId = ""
         $fmje = $zip.Entries | Where-Object { $_.FullName -eq "fabric.mod.json" } | Select-Object -First 1
         if ($fmje) {
@@ -285,6 +324,7 @@ function Invoke-BypassScan {
             } catch { }
         }
 
+        # ── 3. BYTECODE CHECKS — scan outer + all nested JARs ────────────────
         $allEntries = [System.Collections.Generic.List[object]]::new()
         foreach ($e in $zip.Entries) { $allEntries.Add($e) }
 
@@ -312,28 +352,35 @@ function Invoke-BypassScan {
 
             if ($name -match "\.class$") {
                 $totalClassCount++
+                # Obfuscation: every path segment is 1-2 chars, at least 3 levels deep
+                # a/a/b/c.class → obfuscated | net/minecraft/client/Foo.class → not
                 $segs = ($name -replace "\.class$","") -split "/"
                 if ($segs.Count -ge 3 -and ($segs | Where-Object { $_.Length -gt 2 }).Count -eq 0) {
                     $obfuscatedCount++
                 }
 
+                # Scan bytecode for dangerous API patterns
                 try {
                     $st = $entry.Open()
                     $rd = New-Object System.IO.StreamReader($st, [System.Text.Encoding]::Latin1)
                     $ct = $rd.ReadToEnd(); $rd.Close(); $st.Close()
 
+                    # Runtime.exec — requires all three together to avoid false positives.
+                    # getRuntime() alone is used by perf mods to check available CPU cores.
                     if ($ct -match "java/lang/Runtime" -and
                         $ct -match "getRuntime" -and
                         $ct -match "\bexec\b") {
                         $runtimeExecFound = $true
                     }
 
+                    # HTTP file download: fetches a URL and writes it to disk
                     if ($ct -match "openConnection" -and
                         $ct -match "HttpURLConnection" -and
                         $ct -match "FileOutputStream") {
                         $httpDownloadFound = $true
                     }
 
+                    # HTTP POST exfiltration: sends a body to an external server
                     if ($ct -match "openConnection" -and
                         $ct -match "setDoOutput" -and
                         $ct -match "getOutputStream") {
@@ -345,6 +392,8 @@ function Invoke-BypassScan {
 
         foreach ($iz in $innerZips) { try { $iz.Dispose() } catch { } }
         $zip.Dispose()
+
+        # ── Emit dangerous-code flags ─────────────────────────────────────────
 
         if ($runtimeExecFound) {
             $flags.Add("Runtime.exec() — mod can execute arbitrary OS commands on your machine")
@@ -358,6 +407,8 @@ function Invoke-BypassScan {
             $flags.Add("HTTP POST exfiltration — mod sends data to an external server (possible token/session theft)")
         }
 
+        # Obfuscation: >60% single-letter path classes, at least 10 total.
+        # The 10-class floor avoids flagging tiny utility mods with short package names.
         if ($totalClassCount -ge 10 -and $obfuscatedCount -gt 0) {
             $pct = [math]::Round(($obfuscatedCount / $totalClassCount) * 100)
             if ($pct -ge 60) {
@@ -365,6 +416,10 @@ function Invoke-BypassScan {
             }
         }
 
+        # ── Fake mod identity (only with corroborating dangerous flags) ───────
+        # We never emit this alone. A missing Modrinth hash just means the build
+        # wasn't indexed — that's true for tons of old/custom releases.
+        # We only call it out when dangerous code was also found.
         $knownLegitModIds = @(
             "vmp-fabric","vmp","lithium","sodium","iris","fabric-api",
             "modmenu","ferrite-core","lazydfu","starlight","entityculling",
@@ -383,6 +438,13 @@ function Invoke-BypassScan {
     return $flags
 }
 
+# single pass scan — runs pattern matching and raw string search together
+# no reason to loop through the jars twice
+#
+# word boundary trick: (?<![A-Za-z])TOKEN(?![A-Za-z])
+# keeps things like "AimAssist" from matching inside some random unrelated class name
+# also "velocity" gets special treatment since it's way too generic on its own
+
 function Invoke-ModScan {
     param([string]$FilePath)
 
@@ -391,6 +453,7 @@ function Invoke-ModScan {
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+    # check entry names + readable text inside the jar
     try {
         $patternRegex = [regex]::new(
             '(?<![A-Za-z])(' + ($suspiciousPatterns -join '|') + ')(?![A-Za-z])',
@@ -412,6 +475,8 @@ function Invoke-ModScan {
         $archive.Dispose()
     } catch { }
 
+    # raw bytecode string search
+    # tries strings.exe first (faster), falls back to reading bytes directly
     try {
         $stringsExe = @(
             "C:\Program Files\Git\usr\bin\strings.exe",
@@ -438,6 +503,7 @@ function Invoke-ModScan {
                 }
             }
         } else {
+            # fallback: read raw ASCII bytes from the whole file
             $rawText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($FilePath))
             foreach ($s in $cheatStrings) {
                 if ($s -eq "velocity") {
@@ -448,6 +514,7 @@ function Invoke-ModScan {
                     [void]$foundStrings.Add($s)
                 }
             }
+            # also scan individual .class entries — catches non-ASCII paths
             try {
                 $zip = [System.IO.Compression.ZipFile]::OpenRead($FilePath)
                 foreach ($entry in ($zip.Entries | Where-Object { $_.Name -like "*.class" })) {
@@ -483,39 +550,32 @@ $bypassMods     = @()
 try {
     $jarFiles = Get-ChildItem -Path $modsPath -Filter *.jar -ErrorAction Stop
 } catch {
-    Write-Host "   ❌ Error accessing directory: $_" -ForegroundColor Red
-    Write-Host "   Press any key to exit..." -ForegroundColor Gray
+    Write-Host "❌ Error accessing directory: $_" -ForegroundColor Red
+    Write-Host "Press any key to exit..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit 1
 }
 
 if ($jarFiles.Count -eq 0) {
-    Write-Host "   ⚠️  No JAR files found in: $modsPath" -ForegroundColor Yellow
-    Write-Host "   Press any key to exit..." -ForegroundColor Gray
+    Write-Host "⚠️  No JAR files found in: $modsPath" -ForegroundColor Yellow
+    Write-Host "Press any key to exit..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit 0
 }
 
 $fileWord = if ($jarFiles.Count -eq 1) { "file" } else { "files" }
-Write-Host "   🔍 Found " -NoNewline -ForegroundColor Green
-Write-Host "$($jarFiles.Count) " -NoNewline -ForegroundColor White
-Write-Host "JAR $fileWord to analyze" -ForegroundColor Green
-Write-Host ""
+Write-Host "🔍 Found $($jarFiles.Count) JAR $fileWord to analyze" -ForegroundColor Green
+Write-Host
 
 $spinnerFrames = @("⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷")
 $totalFiles    = $jarFiles.Count
 $idx           = 0
 
-Write-Host "   ╭─────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
-Write-Host "   │                    PHASE 1: VERIFICATION                     │" -ForegroundColor Cyan
-Write-Host "   ╰─────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
-Write-Host ""
-
+# pass 1 - hash lookup against modrinth and megabase
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "   [$spinner] Verifying: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
-    Write-Host "`r" -NoNewline
+    Write-Host "`r[$spinner] Verifying: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
 
     $hash = Get-FileSHA1 -Path $jar.FullName
 
@@ -523,41 +583,31 @@ foreach ($jar in $jarFiles) {
         $modrinthData = Query-Modrinth -Hash $hash
         if ($modrinthData.Slug) {
             $verifiedMods += [PSCustomObject]@{ ModName = $modrinthData.Name; FileName = $jar.Name; FilePath = $jar.FullName }
-            Write-Host "   [$spinner] Verifying: $idx/$totalFiles - $($jar.Name) " -NoNewline
-            Write-Host "✓ VERIFIED" -ForegroundColor Green
             continue
         }
         $megabaseData = Query-Megabase -Hash $hash
         if ($megabaseData.name) {
             $verifiedMods += [PSCustomObject]@{ ModName = $megabaseData.Name; FileName = $jar.Name; FilePath = $jar.FullName }
-            Write-Host "   [$spinner] Verifying: $idx/$totalFiles - $($jar.Name) " -NoNewline
-            Write-Host "✓ VERIFIED" -ForegroundColor Green
             continue
         }
     }
 
     $src = Get-DownloadSource $jar.FullName
     $unknownMods += [PSCustomObject]@{ FileName = $jar.Name; FilePath = $jar.FullName; DownloadSource = $src }
-    Write-Host "   [$spinner] Verifying: $idx/$totalFiles - $($jar.Name) " -NoNewline
-    Write-Host "? UNKNOWN" -ForegroundColor Yellow
 }
 
 Write-Host "`r$(' ' * 100)`r" -NoNewline
-Write-Host ""
 
-# pass 2 - deep scan
+# pass 2 - deep scan every jar for cheat patterns and strings
+# runs on ALL mods, even verified ones — injected code can hide inside a legit wrapper
 $modWord = if ($totalFiles -eq 1) { "mod" } else { "mods" }
-Write-Host "   ╭─────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
-Write-Host "   │                    PHASE 2: DEEP SCAN                        │" -ForegroundColor Cyan
-Write-Host "   ╰─────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "🔬 Deep-scanning all $totalFiles $modWord..." -ForegroundColor Cyan
 $idx = 0
 
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "   [$spinner] Scanning: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
-    Write-Host "`r" -NoNewline
+    Write-Host "`r[$spinner] Scanning: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
 
     $result = Invoke-ModScan -FilePath $jar.FullName
 
@@ -567,30 +617,21 @@ foreach ($jar in $jarFiles) {
             Patterns = $result.Patterns
             Strings  = $result.Strings
         }
+        # if it got flagged it's not verified anymore
         $verifiedMods = $verifiedMods | Where-Object { $_.FileName -ne $jar.Name }
-        Write-Host "   [$spinner] Scanning: $idx/$totalFiles - $($jar.Name) " -NoNewline
-        Write-Host "⚠️  SUSPICIOUS" -ForegroundColor Red
-    } else {
-        Write-Host "   [$spinner] Scanning: $idx/$totalFiles - $($jar.Name) " -NoNewline
-        Write-Host "✓ CLEAN" -ForegroundColor Green
     }
 }
 
 Write-Host "`r$(' ' * 100)`r" -NoNewline
-Write-Host ""
 
-# pass 3 - bypass scan
-Write-Host "   ╭─────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
-Write-Host "   │                    PHASE 3: BYPASS SCAN                      │" -ForegroundColor Cyan
-Write-Host "   ╰─────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
-Write-Host ""
+# pass 3 - bypass / injection scan
+Write-Host "🛡️  Running bypass/injection scan on all $totalFiles $modWord..." -ForegroundColor Magenta
 $idx = 0
 
 foreach ($jar in $jarFiles) {
     $idx++
     $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "   [$spinner] Bypass scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
-    Write-Host "`r" -NoNewline
+    Write-Host "`r[$spinner] Bypass scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
 
     $bypassFlags = Invoke-BypassScan -FilePath $jar.FullName
 
@@ -600,145 +641,130 @@ foreach ($jar in $jarFiles) {
             Flags    = $bypassFlags
         }
         $verifiedMods = $verifiedMods | Where-Object { $_.FileName -ne $jar.Name }
-        Write-Host "   [$spinner] Bypass scan: $idx/$totalFiles - $($jar.Name) " -NoNewline
-        Write-Host "☠️  INJECTION" -ForegroundColor Magenta
-    } else {
-        Write-Host "   [$spinner] Bypass scan: $idx/$totalFiles - $($jar.Name) " -NoNewline
-        Write-Host "✓ SAFE" -ForegroundColor Green
     }
 }
 
 Write-Host "`r$(' ' * 100)`r" -NoNewline
-Write-Host ""
-Write-Host "═══════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkCyan
 
-# RESULTS SECTION - Enhanced visual style
-Write-Host ""
-Write-Host "   ╔══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "   ║                            ANALYSIS RESULTS                               ║" -ForegroundColor Cyan
-Write-Host "   ╚══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-Write-Host ""
+# --- results ---
+Write-Host "`n" + ("━" * 76) -ForegroundColor DarkCyan
 
 if ($verifiedMods.Count -gt 0) {
-    Write-Host "   ╭────────────────────────────────────────────────────────────────────╮" -ForegroundColor Green
-    Write-Host "   │                          ✅ VERIFIED MODS                           │" -ForegroundColor Green
-    Write-Host "   │                           ($($verifiedMods.Count) found)                             │" -ForegroundColor Green
-    Write-Host "   ╰────────────────────────────────────────────────────────────────────╯" -ForegroundColor Green
-    Write-Host ""
+    Write-Host "✅ VERIFIED MODS ($($verifiedMods.Count))" -ForegroundColor Green
+    Write-Host ("─" * 76) -ForegroundColor DarkGray
     foreach ($mod in $verifiedMods) {
-        Write-Host "     ✓ " -NoNewline -ForegroundColor Green
-        Write-Host "$($mod.ModName)" -ForegroundColor White
-        Write-Host "        └─ " -NoNewline -ForegroundColor DarkGray
+        Write-Host "  ✓ " -ForegroundColor Green -NoNewline
+        Write-Host "$($mod.ModName)" -ForegroundColor White -NoNewline
+        Write-Host " → " -ForegroundColor Gray -NoNewline
         Write-Host "$($mod.FileName)" -ForegroundColor DarkGray
-        Write-Host ""
     }
+    Write-Host ""
 }
 
 if ($unknownMods.Count -gt 0) {
-    Write-Host "   ╭────────────────────────────────────────────────────────────────────╮" -ForegroundColor Yellow
-    Write-Host "   │                          ❓ UNKNOWN MODS                            │" -ForegroundColor Yellow
-    Write-Host "   │                           ($($unknownMods.Count) found)                             │" -ForegroundColor Yellow
-    Write-Host "   ╰────────────────────────────────────────────────────────────────────╯" -ForegroundColor Yellow
-    Write-Host ""
+    Write-Host "❓ UNKNOWN MODS ($($unknownMods.Count))" -ForegroundColor Yellow
+    Write-Host ("─" * 76) -ForegroundColor DarkGray
     foreach ($mod in $unknownMods) {
         $name = $mod.FileName
         if ($name.Length -gt 50) { $name = $name.Substring(0,47) + "..." }
-        Write-Host "     ? " -NoNewline -ForegroundColor Yellow
-        Write-Host "$name" -ForegroundColor White
-        if ($mod.DownloadSource) {
-            Write-Host "        └─ " -NoNewline -ForegroundColor DarkGray
-            Write-Host "Source: " -NoNewline -ForegroundColor DarkGray
-            Write-Host "$($mod.DownloadSource)" -ForegroundColor Yellow
-        }
+        $topLine    = "  ╔═ ? " + $name + " " + ("═" * (65 - $name.Length)) + "╗"
+        $sourceText = if ($mod.DownloadSource) { "Source: $($mod.DownloadSource)" } else { "Source: ?" }
+        $bottomLine = "  ╚═ " + $sourceText + " " + ("═" * (67 - $sourceText.Length)) + "╝"
+        Write-Host $topLine    -ForegroundColor Yellow
+        Write-Host $bottomLine -ForegroundColor Yellow
         Write-Host ""
     }
 }
 
 if ($suspiciousMods.Count -gt 0) {
-    Write-Host "   ╭────────────────────────────────────────────────────────────────────╮" -ForegroundColor Red
-    Write-Host "   │                         🚨 SUSPICIOUS MODS                         │" -ForegroundColor Red
-    Write-Host "   │                           ($($suspiciousMods.Count) found)                             │" -ForegroundColor Red
-    Write-Host "   ╰────────────────────────────────────────────────────────────────────╯" -ForegroundColor Red
+    Write-Host "🚨 SUSPICIOUS MODS ($($suspiciousMods.Count))" -ForegroundColor Red
+    Write-Host ("─" * 76) -ForegroundColor DarkGray
     Write-Host ""
     foreach ($mod in $suspiciousMods) {
-        Write-Host "     ⚠️  " -NoNewline -ForegroundColor Red
+        Write-Host "  ╔═══ " -ForegroundColor Red -NoNewline
+        Write-Host "FLAGGED" -ForegroundColor White -BackgroundColor Red -NoNewline
+        Write-Host " ═══════════════════════════════════════════════════════════" -ForegroundColor Red
+        Write-Host "  ║" -ForegroundColor Red
+        Write-Host "  ║  File: " -ForegroundColor Red -NoNewline
         Write-Host "$($mod.FileName)" -ForegroundColor Yellow
-        Write-Host ""
-        
+
         if ($mod.Patterns.Count -gt 0) {
-            Write-Host "        ┌─ " -NoNewline -ForegroundColor Red
-            Write-Host "Detected Patterns:" -ForegroundColor Red
+            Write-Host "  ║" -ForegroundColor Red
+            Write-Host "  ║  Detected Patterns:" -ForegroundColor Red
             foreach ($p in ($mod.Patterns | Sort-Object)) {
-                Write-Host "        │   • " -NoNewline -ForegroundColor Red
+                Write-Host "  ║    • " -ForegroundColor Red -NoNewline
                 Write-Host "$p" -ForegroundColor White
             }
         }
 
         $uniqueStrings = $mod.Strings | Where-Object { $mod.Patterns -notcontains $_ } | Sort-Object
         if ($uniqueStrings.Count -gt 0) {
-            if ($mod.Patterns.Count -gt 0) {
-                Write-Host "        ├─ " -NoNewline -ForegroundColor Red
-            } else {
-                Write-Host "        ┌─ " -NoNewline -ForegroundColor DarkYellow
-            }
-            Write-Host "Detected Strings:" -ForegroundColor DarkYellow
+            Write-Host "  ║" -ForegroundColor Red
+            Write-Host "  ║  Detected Strings:" -ForegroundColor DarkYellow
             foreach ($s in $uniqueStrings) {
-                Write-Host "        │   • " -NoNewline -ForegroundColor DarkYellow
+                Write-Host "  ║    • " -ForegroundColor DarkYellow -NoNewline
                 Write-Host "$s" -ForegroundColor DarkYellow
             }
         }
-        Write-Host "        └────────────────────────────────────────────────────" -ForegroundColor DarkGray
+
+        Write-Host "  ║" -ForegroundColor Red
+        Write-Host "  ╚═══════════════════════════════════════════════════════════════════════" -ForegroundColor Red
         Write-Host ""
     }
 }
 
 if ($bypassMods.Count -gt 0) {
-    Write-Host "   ╭────────────────────────────────────────────────────────────────────╮" -ForegroundColor Magenta
-    Write-Host "   │                        ☠️  BYPASS DETECTED                          │" -ForegroundColor Magenta
-    Write-Host "   │                           ($($bypassMods.Count) found)                             │" -ForegroundColor Magenta
-    Write-Host "   ╰────────────────────────────────────────────────────────────────────╯" -ForegroundColor Magenta
+    Write-Host "☠️  BYPASS / INJECTION DETECTED ($($bypassMods.Count))" -ForegroundColor Magenta
+    Write-Host ("─" * 76) -ForegroundColor DarkGray
     Write-Host ""
     foreach ($mod in $bypassMods) {
-        Write-Host "     ☠️  " -NoNewline -ForegroundColor Magenta
+        Write-Host "  ╔═══ " -ForegroundColor Magenta -NoNewline
+        Write-Host "INJECTION" -ForegroundColor White -BackgroundColor DarkMagenta -NoNewline
+        Write-Host " ══════════════════════════════════════════════════════════" -ForegroundColor Magenta
+        Write-Host "  ║" -ForegroundColor Magenta
+        Write-Host "  ║  File: " -ForegroundColor Magenta -NoNewline
         Write-Host "$($mod.FileName)" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "        ┌─ " -NoNewline -ForegroundColor Magenta
-        Write-Host "Bypass Flags:" -ForegroundColor Magenta
+        Write-Host "  ║" -ForegroundColor Magenta
+        Write-Host "  ║  Bypass Flags:" -ForegroundColor Magenta
         foreach ($flag in $mod.Flags) {
-            Write-Host "        │   ⚠️  " -NoNewline -ForegroundColor Magenta
+            Write-Host "  ║    ⚠ " -ForegroundColor Magenta -NoNewline
             Write-Host "$flag" -ForegroundColor White
         }
-        Write-Host "        └────────────────────────────────────────────────────" -ForegroundColor DarkGray
+        Write-Host "  ║" -ForegroundColor Magenta
+        Write-Host "  ╚═══════════════════════════════════════════════════════════════════════" -ForegroundColor Magenta
         Write-Host ""
     }
 }
 
-# SUMMARY
-Write-Host "   ╔══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Blue
-Write-Host "   ║                              📊 SUMMARY                                   ║" -ForegroundColor Blue
-Write-Host "   ╠══════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Blue
-Write-Host ("   ║  Total files scanned: " + "$totalFiles".PadRight(37) + "║") -ForegroundColor Blue
-Write-Host ("   ║  Verified mods:       " + "$($verifiedMods.Count)".PadRight(37) + "║") -ForegroundColor Blue
-Write-Host ("   ║  Unknown mods:        " + "$($unknownMods.Count)".PadRight(37) + "║") -ForegroundColor Blue
-Write-Host ("   ║  Suspicious mods:     " + "$($suspiciousMods.Count)".PadRight(37) + "║") -ForegroundColor Blue
-Write-Host ("   ║  Bypass/Injected:     " + "$($bypassMods.Count)".PadRight(37) + "║") -ForegroundColor Blue
-Write-Host "   ╚══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Blue
+Write-Host "📊 SUMMARY" -ForegroundColor Cyan
+Write-Host ("━" * 76) -ForegroundColor Blue
+Write-Host "  Total files scanned: " -ForegroundColor Gray -NoNewline; Write-Host "$totalFiles"              -ForegroundColor White
+Write-Host "  Verified mods:       " -ForegroundColor Gray -NoNewline; Write-Host "$($verifiedMods.Count)"   -ForegroundColor Green
+Write-Host "  Unknown mods:        " -ForegroundColor Gray -NoNewline; Write-Host "$($unknownMods.Count)"    -ForegroundColor Yellow
+Write-Host "  Suspicious mods:     " -ForegroundColor Gray -NoNewline; Write-Host "$($suspiciousMods.Count)" -ForegroundColor Red
+Write-Host "  Bypass/Injected:     " -ForegroundColor Gray -NoNewline; Write-Host "$($bypassMods.Count)"     -ForegroundColor Magenta
+Write-Host
+Write-Host ("━" * 76) -ForegroundColor Blue
 Write-Host ""
-
-Write-Host "   ╭────────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
-Write-Host "   │                                                                     │" -ForegroundColor Cyan
-Write-Host "   │            ✨ Analysis complete! Thanks for using! ✨               │" -ForegroundColor Cyan
-Write-Host "   │                     LilyMod Meow Analyzer 🐱                       │" -ForegroundColor Cyan
-Write-Host "   │                                                                     │" -ForegroundColor Cyan
-Write-Host "   │                    " -NoNewline -ForegroundColor Cyan; Write-Host "Made with " -NoNewline -ForegroundColor White; Write-Host "♥" -NoNewline -ForegroundColor Red; Write-Host " by Lily<3 & Tonynoh" -NoNewline -ForegroundColor Cyan; Write-Host "               │" -ForegroundColor Cyan
-Write-Host "   │                                                                     │" -ForegroundColor Cyan
-Write-Host "   │    " -NoNewline -ForegroundColor Cyan; Write-Host "💬 Discord: " -NoNewline -ForegroundColor Blue; Write-Host "tonyboy90_".PadRight(47) -ForegroundColor Blue -NoNewline; Write-Host "│" -ForegroundColor Cyan
-Write-Host "   │    " -NoNewline -ForegroundColor Cyan; Write-Host "🔗 GitHub:  " -NoNewline -ForegroundColor DarkGray; Write-Host "https://github.com/MeowTonynoh".PadRight(45) -ForegroundColor DarkGray -NoNewline; Write-Host "│" -ForegroundColor Cyan
-Write-Host "   │    " -NoNewline -ForegroundColor Cyan; Write-Host "🎥 YouTube: " -NoNewline -ForegroundColor Red; Write-Host "tonynoh-07".PadRight(47) -ForegroundColor Red -NoNewline; Write-Host "│" -ForegroundColor Cyan
-Write-Host "   │                                                                     │" -ForegroundColor Cyan
-Write-Host "   ╰────────────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
+Write-Host "  ✨ Analysis complete! Thanks for using Meow Mod Analyzer 🐱" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "═══════════════════════════════════════════════════════════════════════════════" -ForegroundColor Blue
+Write-Host "  👤 Created by: " -ForegroundColor White -NoNewline
+Write-Host "🌟 " -ForegroundColor Cyan -NoNewline
+Write-Host "Tonynoh" -ForegroundColor Cyan
+Write-Host "  📱 My Socials: " -ForegroundColor White -NoNewline
+Write-Host "💬 " -ForegroundColor Blue -NoNewline
+Write-Host "Discord  : " -ForegroundColor Blue -NoNewline
+Write-Host "tonyboy90_" -ForegroundColor Blue
+Write-Host "                 " -NoNewline
+Write-Host "🔗 " -ForegroundColor DarkGray -NoNewline
+Write-Host "GitHub   : " -ForegroundColor DarkGray -NoNewline
+Write-Host "https://github.com/MeowTonynoh" -ForegroundColor DarkGray
+Write-Host "                 " -NoNewline
+Write-Host "🎥 " -ForegroundColor Red -NoNewline
+Write-Host "YouTube  : " -ForegroundColor Red -NoNewline
+Write-Host "tonynoh-07" -ForegroundColor Red
 Write-Host ""
-Write-Host "   Press any key to exit..." -ForegroundColor DarkGray
+Write-Host ("━" * 76) -ForegroundColor Blue
+Write-Host ""
+Write-Host "Press any key to exit..." -ForegroundColor DarkGray
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
