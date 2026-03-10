@@ -1,5 +1,5 @@
-# Meow Mod Analyzer - PowerShell Script
-# Author: Tonynoh
+# Horror Mod Analyzer - PowerShell Script
+# Author: Daanii06_
 # scans minecraft mods for shady stuff and checks em against known mod databases
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -22,21 +22,22 @@ $Banner = @"
 ██║  ██║██║ ╚████║██║  ██║███████╗   ██║   ███████╗███████╗██║  ██║
 ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝
 
-⠀⠀⠀⠀⣶⣄⠀⠀⠀⠀⠀⠀⢀⣶⡆⠀⠀⠀
-⠀⠀⠀⢸⣿⣿⡆⠀⠀⠀⠀⢀⣾⣿⡇⠀⠀⠀
-⠀⠀⠀⠘⣿⣿⣿⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀
-⠀⠀⠀⠀⢿⣿⣿⣤⣤⣤⣤⣼⣿⡿⠃⠀⠀⠀
-⠀⠀⠀⢠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀
-⠀⠀⢠⣿⡃⣦⢹⣿⣟⣙⣿⣿⠰⡀⣿⣇⠀⠀
-⠠⠬⣿⣿⣷⣶⣿⣿⣿⣿⣿⣿⣷⣾⣿⣿⡭⠤      
-⠀⣼⣿⣿⣿⣿⠿⠛⠛⠛⠛⠻⢿⣿⣿⣿⣿⡀
-⢰⣿⣿⣿⠋⠀⠀⠀⢀⣀⠀⠀⠀⠉⢿⣿⣿⣧
-⢸⣿⣿⠃⠜⠛⠂⠀⠋⠉⠃⠐⠛⠻⠄⢿⣿⣿
-⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿
-⠘⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣿⡏
-⠀⠈⠻⠿⣤⣀⡀⠀⠀⠀⠀⠀⣀⣠⠾⠟⠋⠀  Made By ♥ Daanii06_
+
+                         \    /\
+                          )  ( ')
+                         (  /  )
+                          \(__)|            Made ♥ by Daanii06_
 
 "@
+
+Write-Host $Banner -ForegroundColor Cyan
+Write-Host "Made with" -ForegroundColor Gray -NoNewline
+Write-Host "♥ " -ForegroundColor Red -NoNewline
+Write-Host "by " -ForegroundColor Gray -NoNewline
+Write-Host "Daanii06_" -ForegroundColor Cyan
+Write-Host ""
+Write-Host ("━" * 76) -ForegroundColor DarkCyan
+Write-Host
 
 # ask the user where their mods folder is
 Write-Host "Enter path to the mods folder: " -NoNewline
@@ -218,226 +219,6 @@ $cheatStrings = @(
     "WalksyCrystalOptimizerMod", "WalksyOptimizer", "WalskyOptimizer"
 )
 
-# ─────────────────────────────────────────────────────────────────────────────
-# BYPASS / INJECTION DETECTION
-# Catches obfuscated cheat loaders (dqrkis-style) without false positives on
-# legitimate mods that use Fabric's jar-in-jar system normally.
-#
-# Core insight — what separates a malicious loader from a legit mod:
-#
-#   LEGIT jar-in-jar:
-#     • Every nested JAR has a version number in its filename
-#       (cloth-config-13.0.jar, fabric-api-base-0.97.3.jar)
-#     • OR it's a Maven-style dep (org_jetbrains_*, com_ibm_*, net_*, etc.)
-#     • The outer JAR has real code alongside its nested deps
-#     • No dangerous APIs (Runtime.exec, HTTP download/POST)
-#
-#   MALICIOUS loader:
-#     • Nested JAR has a short generic name with NO version number
-#       (mc-core.jar, payload.jar, bootstrap.jar, core.jar)
-#     • Outer JAR is a hollow shell: 0-2 own classes, wraps exactly 1 JAR
-#     • Bytecode uses Runtime.exec / HTTP file download / HTTP POST exfil
-#     • 60%+ of all classes renamed to single letters (a/a/b/c.class)
-#
-# False-positive guards:
-#   • "Suspicious nested JAR name" → only fires when filename has NO digits
-#     AND does NOT start with a Maven prefix (com_, org_, net_, io_, dev_…)
-#     AND the base name is ≤ 20 chars
-#     → passes cloth-config-13.0.jar, org_jetbrains_kotlin-stdlib.jar, etc.
-#
-#   • "Hollow shell" → only fires when there is EXACTLY ONE nested JAR
-#     and the outer JAR owns < 3 classes
-#     → never triggers on fabric-api (50 nested JARs) or any normal mod
-#
-#   • "Fake mod identity" → ONLY emitted when at least one dangerous flag
-#     (Runtime.exec / HTTP / obfuscation / suspicious JAR name) is also present
-#     → Modrinth simply doesn't index every build; a missing hash alone is
-#        not meaningful evidence
-# ─────────────────────────────────────────────────────────────────────────────
-
-function Invoke-BypassScan {
-    param([string]$FilePath)
-
-    $flags = [System.Collections.Generic.List[string]]::new()
-
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-    # Maven/Gradle-style prefixes used when bundling third-party libs.
-    # Filenames starting with these are always legitimate bundled dependencies.
-    # e.g. org_jetbrains_kotlin_kotlin-stdlib.jar, com_ibm_async_asyncutil.jar
-    $mavenPrefixes = @(
-        "com_","org_","net_","io_","dev_","gs_","xyz_",
-        "app_","me_","tv_","uk_","be_","fr_","de_"
-    )
-
-    # Returns $true when a nested JAR filename looks like a hidden payload.
-    # Safe when: has a digit (versioned), starts with a maven prefix, or name > 20 chars.
-    function Test-SuspiciousJarName {
-        param([string]$JarName)
-        $base = [System.IO.Path]::GetFileNameWithoutExtension($JarName)
-        if ($base -match '\d')                                          { return $false }
-        foreach ($pfx in $mavenPrefixes) {
-            if ($base.ToLower().StartsWith($pfx))                       { return $false }
-        }
-        if ($base.Length -gt 20)                                        { return $false }
-        return $true
-    }
-
-    try {
-        $zip = [System.IO.Compression.ZipFile]::OpenRead($FilePath)
-
-        $nestedJars   = @($zip.Entries | Where-Object { $_.FullName -match "^META-INF/jars/.+\.jar$" })
-        $outerClasses = @($zip.Entries | Where-Object { $_.FullName -match "\.class$" })
-
-        # ── 1. SUSPICIOUS NESTED JAR NAME ────────────────────────────────────
-        # A nested JAR without a version number and without a maven prefix is
-        # the clearest sign of a hidden payload (mc-core.jar, payload.jar, etc.)
-        $suspiciousNestedJars = @()
-        foreach ($nj in $nestedJars) {
-            $njBase = [System.IO.Path]::GetFileName($nj.FullName)
-            if (Test-SuspiciousJarName -JarName $njBase) {
-                $suspiciousNestedJars += $njBase
-            }
-        }
-        foreach ($sj in $suspiciousNestedJars) {
-            $flags.Add("Suspicious nested JAR — no version number, not a known dependency: $sj")
-        }
-
-        # ── 2. HOLLOW SHELL ───────────────────────────────────────────────────
-        # Exactly ONE nested JAR + fewer than 3 own classes = the outer JAR
-        # exists only to load the hidden inner JAR. fabric-api has 50 nested
-        # JARs and tons of own code, so this never fires for legitimate mods.
-        if ($nestedJars.Count -eq 1 -and $outerClasses.Count -lt 3) {
-            $njName = [System.IO.Path]::GetFileName(($nestedJars | Select-Object -First 1).FullName)
-            $flags.Add("Hollow shell — outer JAR has only $($outerClasses.Count) own class(es) but wraps: $njName")
-        }
-
-        # ── Read outer mod ID for later use ──────────────────────────────────
-        $outerModId = ""
-        $fmje = $zip.Entries | Where-Object { $_.FullName -eq "fabric.mod.json" } | Select-Object -First 1
-        if ($fmje) {
-            try {
-                $s = $fmje.Open()
-                $r = New-Object System.IO.StreamReader($s)
-                $t = $r.ReadToEnd(); $r.Close(); $s.Close()
-                if ($t -match '"id"\s*:\s*"([^"]+)"') { $outerModId = $matches[1] }
-            } catch { }
-        }
-
-        # ── 3. BYTECODE CHECKS — scan outer + all nested JARs ────────────────
-        $allEntries = [System.Collections.Generic.List[object]]::new()
-        foreach ($e in $zip.Entries) { $allEntries.Add($e) }
-
-        $innerZips = [System.Collections.Generic.List[object]]::new()
-        foreach ($nj in $nestedJars) {
-            try {
-                $ns = $nj.Open()
-                $ms = New-Object System.IO.MemoryStream
-                $ns.CopyTo($ms); $ns.Close()
-                $ms.Position = 0
-                $iz = [System.IO.Compression.ZipArchive]::new($ms, [System.IO.Compression.ZipArchiveMode]::Read)
-                $innerZips.Add($iz)
-                foreach ($ie in $iz.Entries) { $allEntries.Add($ie) }
-            } catch { }
-        }
-
-        $runtimeExecFound  = $false
-        $httpDownloadFound = $false
-        $httpExfilFound    = $false
-        $obfuscatedCount   = 0
-        $totalClassCount   = 0
-
-        foreach ($entry in $allEntries) {
-            $name = $entry.FullName
-
-            if ($name -match "\.class$") {
-                $totalClassCount++
-                # Obfuscation: every path segment is 1-2 chars, at least 3 levels deep
-                # a/a/b/c.class → obfuscated | net/minecraft/client/Foo.class → not
-                $segs = ($name -replace "\.class$","") -split "/"
-                if ($segs.Count -ge 3 -and ($segs | Where-Object { $_.Length -gt 2 }).Count -eq 0) {
-                    $obfuscatedCount++
-                }
-
-                # Scan bytecode for dangerous API patterns
-                try {
-                    $st = $entry.Open()
-                    $rd = New-Object System.IO.StreamReader($st, [System.Text.Encoding]::Latin1)
-                    $ct = $rd.ReadToEnd(); $rd.Close(); $st.Close()
-
-                    # Runtime.exec — requires all three together to avoid false positives.
-                    # getRuntime() alone is used by perf mods to check available CPU cores.
-                    if ($ct -match "java/lang/Runtime" -and
-                        $ct -match "getRuntime" -and
-                        $ct -match "\bexec\b") {
-                        $runtimeExecFound = $true
-                    }
-
-                    # HTTP file download: fetches a URL and writes it to disk
-                    if ($ct -match "openConnection" -and
-                        $ct -match "HttpURLConnection" -and
-                        $ct -match "FileOutputStream") {
-                        $httpDownloadFound = $true
-                    }
-
-                    # HTTP POST exfiltration: sends a body to an external server
-                    if ($ct -match "openConnection" -and
-                        $ct -match "setDoOutput" -and
-                        $ct -match "getOutputStream") {
-                        $httpExfilFound = $true
-                    }
-                } catch { }
-            }
-        }
-
-        foreach ($iz in $innerZips) { try { $iz.Dispose() } catch { } }
-        $zip.Dispose()
-
-        # ── Emit dangerous-code flags ─────────────────────────────────────────
-
-        if ($runtimeExecFound) {
-            $flags.Add("Runtime.exec() — mod can execute arbitrary OS commands on your machine")
-        }
-
-        if ($httpDownloadFound) {
-            $flags.Add("HTTP file download — mod fetches and writes files from a remote server")
-        }
-
-        if ($httpExfilFound) {
-            $flags.Add("HTTP POST exfiltration — mod sends data to an external server (possible token/session theft)")
-        }
-
-        # Obfuscation: >60% single-letter path classes, at least 10 total.
-        # The 10-class floor avoids flagging tiny utility mods with short package names.
-        if ($totalClassCount -ge 10 -and $obfuscatedCount -gt 0) {
-            $pct = [math]::Round(($obfuscatedCount / $totalClassCount) * 100)
-            if ($pct -ge 60) {
-                $flags.Add("Heavy obfuscation — $pct% of classes have single-letter names (a/b/c style). Legitimate mods don't do this.")
-            }
-        }
-
-        # ── Fake mod identity (only with corroborating dangerous flags) ───────
-        # We never emit this alone. A missing Modrinth hash just means the build
-        # wasn't indexed — that's true for tons of old/custom releases.
-        # We only call it out when dangerous code was also found.
-        $knownLegitModIds = @(
-            "vmp-fabric","vmp","lithium","sodium","iris","fabric-api",
-            "modmenu","ferrite-core","lazydfu","starlight","entityculling",
-            "memoryleakfix","krypton","c2me-fabric","smoothboot-fabric",
-            "immediatelyfast","noisium","threadtweak"
-        )
-        $dangerCount = ($flags | Where-Object {
-            $_ -match "Runtime\.exec|HTTP file download|HTTP POST|Heavy obfuscation|Suspicious nested JAR"
-        }).Count
-        if ($outerModId -and ($knownLegitModIds -contains $outerModId) -and $dangerCount -gt 0) {
-            $flags.Add("Fake mod identity — outer JAR claims to be '$outerModId' but hash is not on Modrinth and dangerous code was found inside")
-        }
-
-    } catch { }
-
-    return $flags
-}
-
 # single pass scan — runs pattern matching and raw string search together
 # no reason to loop through the jars twice
 #
@@ -545,7 +326,6 @@ function Invoke-ModScan {
 $verifiedMods   = @()
 $unknownMods    = @()
 $suspiciousMods = @()
-$bypassMods     = @()
 
 try {
     $jarFiles = Get-ChildItem -Path $modsPath -Filter *.jar -ErrorAction Stop
@@ -624,28 +404,6 @@ foreach ($jar in $jarFiles) {
 
 Write-Host "`r$(' ' * 100)`r" -NoNewline
 
-# pass 3 - bypass / injection scan
-Write-Host "🛡️  Running bypass/injection scan on all $totalFiles $modWord..." -ForegroundColor Magenta
-$idx = 0
-
-foreach ($jar in $jarFiles) {
-    $idx++
-    $spinner = $spinnerFrames[$idx % $spinnerFrames.Length]
-    Write-Host "`r[$spinner] Bypass scan: $idx/$totalFiles - $($jar.Name)" -ForegroundColor Yellow -NoNewline
-
-    $bypassFlags = Invoke-BypassScan -FilePath $jar.FullName
-
-    if ($bypassFlags.Count -gt 0) {
-        $bypassMods += [PSCustomObject]@{
-            FileName = $jar.Name
-            Flags    = $bypassFlags
-        }
-        $verifiedMods = $verifiedMods | Where-Object { $_.FileName -ne $jar.Name }
-    }
-}
-
-Write-Host "`r$(' ' * 100)`r" -NoNewline
-
 # --- results ---
 Write-Host "`n" + ("━" * 76) -ForegroundColor DarkCyan
 
@@ -713,36 +471,12 @@ if ($suspiciousMods.Count -gt 0) {
     }
 }
 
-if ($bypassMods.Count -gt 0) {
-    Write-Host "☠️  BYPASS / INJECTION DETECTED ($($bypassMods.Count))" -ForegroundColor Magenta
-    Write-Host ("─" * 76) -ForegroundColor DarkGray
-    Write-Host ""
-    foreach ($mod in $bypassMods) {
-        Write-Host "  ╔═══ " -ForegroundColor Magenta -NoNewline
-        Write-Host "INJECTION" -ForegroundColor White -BackgroundColor DarkMagenta -NoNewline
-        Write-Host " ══════════════════════════════════════════════════════════" -ForegroundColor Magenta
-        Write-Host "  ║" -ForegroundColor Magenta
-        Write-Host "  ║  File: " -ForegroundColor Magenta -NoNewline
-        Write-Host "$($mod.FileName)" -ForegroundColor Yellow
-        Write-Host "  ║" -ForegroundColor Magenta
-        Write-Host "  ║  Bypass Flags:" -ForegroundColor Magenta
-        foreach ($flag in $mod.Flags) {
-            Write-Host "  ║    ⚠ " -ForegroundColor Magenta -NoNewline
-            Write-Host "$flag" -ForegroundColor White
-        }
-        Write-Host "  ║" -ForegroundColor Magenta
-        Write-Host "  ╚═══════════════════════════════════════════════════════════════════════" -ForegroundColor Magenta
-        Write-Host ""
-    }
-}
-
 Write-Host "📊 SUMMARY" -ForegroundColor Cyan
 Write-Host ("━" * 76) -ForegroundColor Blue
 Write-Host "  Total files scanned: " -ForegroundColor Gray -NoNewline; Write-Host "$totalFiles"              -ForegroundColor White
 Write-Host "  Verified mods:       " -ForegroundColor Gray -NoNewline; Write-Host "$($verifiedMods.Count)"   -ForegroundColor Green
 Write-Host "  Unknown mods:        " -ForegroundColor Gray -NoNewline; Write-Host "$($unknownMods.Count)"    -ForegroundColor Yellow
 Write-Host "  Suspicious mods:     " -ForegroundColor Gray -NoNewline; Write-Host "$($suspiciousMods.Count)" -ForegroundColor Red
-Write-Host "  Bypass/Injected:     " -ForegroundColor Gray -NoNewline; Write-Host "$($bypassMods.Count)"     -ForegroundColor Magenta
 Write-Host
 Write-Host ("━" * 76) -ForegroundColor Blue
 Write-Host ""
